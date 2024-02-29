@@ -46,7 +46,7 @@ class CommandLineParams:
     fg_thresh = 6.0
     bg_thresh = 3.5
     use_subdirs = False
-    classifier_method = ClassifierMethods[1]
+    classifier_method = ClassifierMethods[3] # RandomForest
     ml_prob_thresh = 0.5
     ml_prob_thresh_exceptions = []
     save3d = False
