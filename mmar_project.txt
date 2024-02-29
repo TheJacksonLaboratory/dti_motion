@@ -1,6 +1,6 @@
 [settings]
-input_dir = ./sample_data
-output_dir = results_new
+input_dir = sample_data
+output_dir = results
 model_file = 
 use_alt_model = False
 ml_prob = 0.5

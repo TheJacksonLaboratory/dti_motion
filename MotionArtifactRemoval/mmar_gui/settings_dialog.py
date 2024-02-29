@@ -191,8 +191,10 @@ class SettingsDialog(QDialog):
 
         model = pickle.load(open(model_file, 'rb'))
         method_list = list(model.keys())
-        for method_str in method_list:
-            self.choose_clf.addItem(method_str)
+        self.choose_clf.addItems(method_list)
+        classifier_str = self.settings_dict['ml_classifier']
+        idx = self.choose_clf.findText(classifier_str)
+        self.choose_clf.setCurrentIndex(idx)
 
         b_ok.setFocus()
 

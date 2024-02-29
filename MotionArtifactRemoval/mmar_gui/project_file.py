@@ -52,7 +52,7 @@ class MmarProjectFile():
         if settings_tmp.get('input_dir'):
             settings['input_dir'] = settings_tmp.get('input_dir')
         else:
-            settings['input_dir'] = "."
+            settings['input_dir'] = "sample_data"
 
 
         if settings_tmp.get('output_dir'):
@@ -78,12 +78,12 @@ class MmarProjectFile():
         if settings_tmp.get('ml_classifier'):
             settings['ml_classifier'] = settings_tmp.get('ml_classifier')
         else:
-            settings['ml_classifier'] = 'logistic_regression'
+            settings['ml_classifier'] = 'Random Forest'
 
         if settings_tmp.get('image_filename'):
             settings['image_filename'] = settings_tmp.get('image_filename')
         else:
-            settings['image_filename'] = "img.nii.gz"
+            settings['image_filename'] = "dti/image.nii.gz"
 
         if settings_tmp.get('use_metadata') and (settings_tmp.get('use_metadata') == 'False'):
             settings['use_metadata'] = False
@@ -93,12 +93,12 @@ class MmarProjectFile():
         if settings_tmp.get('bval_filename'):
             settings['bval_filename'] = settings_tmp.get('bval_filename')
         else:
-            settings['bval_filename'] = "data.bval"
+            settings['bval_filename'] = "bvals.txt"
 
         if settings_tmp.get('bvec_filename'):
             settings['bvec_filename'] = settings_tmp.get('bvec_filename')
         else:
-            settings['bvec_filename'] = "data.bvec"
+            settings['bvec_filename'] = "bvecs.txt"
 
         if settings_tmp.get('use_subdirs') and (settings_tmp.get('use_subdirs') == 'True'):
             settings['use_subdirs'] = True
