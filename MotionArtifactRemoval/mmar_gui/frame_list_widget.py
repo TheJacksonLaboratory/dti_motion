@@ -41,6 +41,8 @@ class FrameListWidget(QWidget):
         # button to save images
         self.b_save_all = QPushButton('Save Modified Scan')
         self.b_save_all.clicked.connect(self.on_save_clicked)
+        self.b_save_slice = QPushButton('Save Current Slice')
+        self.b_save_slice.clicked.connect(self.on_save_slice_clicked)
 
         vbl_main = QVBoxLayout()
         vbl_1 = QVBoxLayout()
@@ -54,6 +56,7 @@ class FrameListWidget(QWidget):
         hbl_lists.addLayout(vbl_2)
         vbl_main.addLayout(hbl_lists)
         vbl_main.addWidget(self.b_save_all)
+        vbl_main.addWidget(self.b_save_slice)
 
         self.setLayout(vbl_main)
 
@@ -126,3 +129,9 @@ class FrameListWidget(QWidget):
         Called when the "Save Modified Scan" button is clicked.
         '''
         self.parent().save_all_slices()
+
+
+    def on_save_slice_clicked(self):
+        rejected_frames = self.get_rejected_frames()
+        self.parent().save_single_slice(rejected_frames)
+        return

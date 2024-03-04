@@ -92,6 +92,81 @@ def write_edited_data(output_dir, src_img_path, img, tensor_metadata,
 
     return ""
 
+def write_edited_slice(output_dir, src_img_path, img, tensor_metadata,
+    rejected_frames, slice_number, use_subdirs, save3d, log=None):
+    '''
+    Write all output files
+
+    Parameters:
+        output_dir : string
+            directory for output.  Will be created if it does not exist
+        src_img_path : string
+            original image path
+        img : 4D image
+            original image
+        tensor_metadata : TensorMetadata class instance
+            contents of bval and bvec files and methods for manipulation
+        rejected_frames : list of lists
+            rejected frames - a list per slice
+        slice_number: integer
+            zero-based slice number
+        use_subdirs : boolean
+            when true a subdirectory is created for each slice
+        save3d : boolean
+            when true, slice is saved as a multi-frame 2D image,
+            otherwise all slices are saved in each slice file
+        log : log object
+            used for logging messages
+
+    Return:
+        error string or empty string if successful
+    '''
+
+    if not os.path.isdir(output_dir):
+        try:
+            os.mkdir(output_dir)
+        except OSError as error:
+            error_str = f"Could not create output directory: {output_dir} ({error})"
+            if log:
+                log.add_msg(error_str)
+            return error_str
+
+    if log:
+        log.add_msg(f"{os.linesep}writing modified slices:")
+
+    img_file = os.path.split(src_img_path)[1]
+
+    #
+    # Write the slice
+    #
+    slice_grp = "Z" + str(slice_number).zfill(3)
+    if use_subdirs:
+        slice_path = os.path.join(output_dir, slice_grp)
+        if not os.path.isdir(slice_path):
+            try:
+                os.mkdir(slice_path)
+            except OSError as error:
+                error_str = f"Could not create directory for edited slice: {slice_path} ({error})"
+                if log:
+                    log.add_msg(error_str)
+                return error_str
+        prefix = ''
+    else:
+        slice_path = output_dir
+        prefix = slice_grp+'_'
+
+    tensor_metadata.write(slice_path, prefix, rejected_frames)
+
+    img_path = os.path.join(slice_path, prefix+img_file)
+    if log:
+        log.add_msg(f"    slice {slice_number}: {img_path}")
+    if save3d:
+        write_img_slice_3d(img, slice_number, rejected_frames, img_path)
+    else:
+        write_img_slice_4d(img, src_img_path, rejected_frames, img_path)
+
+    return ""
+
 
 def write_img_slice_4d(img_4d, src_img_path, rejected_frames, dst_img_path):
     '''

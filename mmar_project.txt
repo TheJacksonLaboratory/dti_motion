@@ -3,12 +3,12 @@ input_dir = sample_data
 output_dir = results
 model_file = 
 use_alt_model = False
-ml_prob = 0.5
+ml_prob = 0.6
 ml_classifier = Random Forest
 image_filename = dti/image.nii.gz
 use_metadata = True
 bval_filename = bvals.txt
 bvec_filename = bvecs.txt
-use_subdirs = False
+use_subdirs = True
 save_4d = False
 

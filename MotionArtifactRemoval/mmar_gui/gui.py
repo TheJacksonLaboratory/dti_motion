@@ -19,7 +19,7 @@ from PyQt5.QtWidgets import (QApplication, QGridLayout, QWidget, QVBoxLayout, QM
 from ..mmar.bad_frames import create_mask
 from ..mmar.version import Version
 from ..mmar.tensor_metadata import TensorMetadata
-from ..mmar.write_output import write_edited_data
+from ..mmar.write_output import write_edited_data, write_edited_slice
 
 
 from .canvas_widget import CanvasWidget
@@ -284,6 +284,43 @@ class App(QWidget):
             model_path = os.path.join(up(up(__file__)),'motion_detector','trained_models','frame_rejection_all_80.pkl')
         self.model = pickle.load(open(model_path, 'rb'))
 
+
+    def save_single_slice(self, rejected_frames):
+        slice_number = self.image_navigator.get_current_slice()
+        output_dir = self.settings_widget.get_output_dir()
+        if not output_dir:
+            output_dir = 'output'
+        src_img_path = self.file_name
+        output_dir = os.path.join(
+            self.settings_widget.get_project_folder(),
+            self.mouse_list_widget.get_selected_mouse(),
+            self.settings_widget.get_output_dir())
+
+        use_subdirs = self.settings_widget.get_use_subdirs()
+        save_3d = not self.settings_widget.get_save_4d()
+
+        error_str = write_edited_slice(
+            output_dir,
+            src_img_path,
+            self.data_original,
+            self.tensor_metadata,
+            rejected_frames,
+            slice_number,
+            use_subdirs,
+            save_3d)
+        if error_str:
+            show_warning(msg=f"Error occurred writing data:\n\n{error_str}")
+            return False
+
+        msg_box = QMessageBox()
+        msg_box.setIcon(QMessageBox.Information)
+        msg_box.setText(f"The modified image and metadata for slice-{slice_number} are saved in:\n\n{output_dir}")
+        msg_box.setWindowTitle("mmar_gui")
+        msg_box.setStandardButtons(QMessageBox.Ok)
+        msg_box.setSizeGripEnabled(True)
+        msg_box.exec()
+
+        return
 
     def save_all_slices(self):
         '''
