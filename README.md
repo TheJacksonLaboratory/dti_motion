@@ -20,31 +20,26 @@ There are three application in this package: a command-line application (CLI) th
 There are several machine learning methods of classification offered by both the command line and GUI applications.  Additionally, the CLI offers a simple threshold-based method using Median Absolute Deviation (MAD).
 
 ## Installation
-This package requires Python 3. We recommend installing the package in a Python virtual environment, or alternatively, installing in an Anaconda virtual environment. 
-Start by unpacking the MMAR release, replacing *<mmar_dist.zip>* with the actual name of the distribution file:
-```
-unzip <mmar_dist.zip>
-```
-To create a Python virtual environment and install MMAR:
-```
-python -m venv env_mmar
-source env_mmar/bin/activate
-cd <mmar_dist>
-pip install .
-```
-
-Alternatively, you can download the Anaconda installer for [MacOS](https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.pkg)
+MMAR can be installed in an Anaconda virtual environment following these steps.  If you do not have the Anaconda package manager the installer can be downloaded for [MacOS](https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.pkg)
 or [Windows](https://repo.anaconda.com/miniconda/Miniconda3-latest-Windows-x86_64.exe), and install with:
+
 
 ```
 curl -o ~/miniconda.sh 'https://repo.anaconda.com/miniconda/Miniconda3-latest-MacOSX-x86_64.sh'
 bash ~/miniconda.sh -b -p $HOME/miniconda
+```
+
+A virtual environment for this project can be created using:
+```
 conda create -n MMAR python=3.7.0 -y
 conda activate MMAR
-cd <mmar_dist>
+```
+
+After cloning this repository into a directory (e.g. dti_motion), the MMAR package can be installed with the following commands.
+```
+cd dti_motion
 pip install .
 ```
-After initial installation, updates can be installed by activating the virtual environment (either Python or Anaconda) and issuing the command "pip install .".
 
 
 
@@ -69,8 +64,9 @@ To install this package on newer Macbook you should first install Rossetta and t
 ## Testing the Installation
 The installation can be tested by running the applications in the MMAR module after
 activating the virtual environment.
-Run the commands below to start the command-line application and the GUI application.
+Run the commands below to activate the environment, then start the command-line and GUI applications.
 ```
+conda activate MMAR
 python -m MotionArtifactRemoval.mmar.mmar -h
 python -m MotionArtifactRemoval.mmar_gui.gui
 ```
@@ -98,21 +94,10 @@ The output is organized by slice, with each output file prepended with the slice
         <noddi bval file> - same as <bval file> with values rounded to nearest 100
         <bvec file> - copy of original bvecs file with rejected frames removed
 ```
+## Sample Test Data
+Sample data for three scans has been provided in the *"sample_data"* directory.  When *mmar_gui is started from the dti directory the default config file, *"mmar_project.txt"* will see these scans.  Select a sample scan from the left-hand control, and navigate through the slices and frames using the controls below the image.
 
-## How to build Signularity container image
-Here we describe how one could build a [Singularity](https://docs.sylabs.io/guides/3.5/user-guide/introduction.html) container image for the MMAR application. Building the container locally is suggested. Building on JAX HPX remote builder is also possible, however, needs the code to be stored on a sharable link on the internet for the builder to access. This is not recommended for production use. Here we describe how to build the container image on a local machine.
 
-It should be noted that the architecture of the local machine should match the architecture of the HPC cluster. Be sure to know how to set architecture correctly if you are using M1 chip with arm64 architecture as opposed to x86_64 on HPC. 
-
-On the parrent directory of where you have your latest release of MMAR, run the following command:
-```Bash
-singularity build mmar_x.x.sig mmar_singularity_container.def
-```
-
-You could test your build later by running the following command:
-```Bash
-singularity run python -m MotionArtifactRemoval.mmar.mmar -h
-```
 ## Training Application (motion_detector)
 The training program uses a list of classified frames to generate a classification model that is used the the GUI and CLI applications.  The program is invoked to show all options with the following command:
 ```
@@ -138,18 +123,18 @@ python -m MotionArtifactRemoval.motion_detector.run \
 ```
 The *mouse_list* file is a text file containing a list of scan files that will be used for training.  For example,
 ```
-        data/JAX085/dwi/data.nii.gz
-        data/JAX086/dwi/data.nii.gz
-        data/JAX087/dwi/data.nii.gz
-        data/JAX088/dwi/data.nii.gz
-        data/JAX089/dwi/data.nii.gz
-        data/JAX090/dwi/data.nii.gz
-        data/JAX091/dwi/data.nii.gz
-        data/JAX092/dwi/data.nii.gz
-        data/JAX094/dwi/data.nii.gz
-        data/JAX095/dwi/data.nii.gz
-        data/JAX096/dwi/data.nii.gz
-        data/JAX097/dwi/data.nii.gz
+        data/mouse_085/dwi/data.nii.gz
+        data/mouse_086/dwi/data.nii.gz
+        data/mouse_087/dwi/data.nii.gz
+        data/mouse_088/dwi/data.nii.gz
+        data/mouse_089/dwi/data.nii.gz
+        data/mouse_090/dwi/data.nii.gz
+        data/mouse_091/dwi/data.nii.gz
+        data/mouse_092/dwi/data.nii.gz
+        data/mouse_094/dwi/data.nii.gz
+        data/mouse_095/dwi/data.nii.gz
+        data/mouse_096/dwi/data.nii.gz
+        data/mouse_097/dwi/data.nii.gz
 ```
 The *csv_list* is similarly a list of corresponding frame classifications, one for each scan. Each file contains line per slice.
 Each line contains a list indices of rejected frames.  The following is an example for a scan with 17 slices:
@@ -214,3 +199,4 @@ cd MotionArtifactRemoval/mmar
 ./random_frames.py -h
 ./random_frames.py -s 1 -e 46 -n 17 -f 8 -o excluded_frames.csv
 ```
+
