@@ -14,7 +14,11 @@ intensity in the bval file.
 For each slice in the z-stack, frames affected by motion are removed. Since the affected frames
 will be different for each slice, the final output is a set of image and metadata files for each slice.
 
-There are three application in this package: a command-line application (CLI) that  is well suited for batch processing, a graphical interface application (GUI) for inspection and validation, and a training application to create the models used for frame classification.  All three are Python-based applications that are installed as a single Python module.
+There are three application in this package: a command-line application (CLI) that  is well suited for batch processing,
+a graphical interface application (GUI) for inspection and validation, and a training application to create the models used for frame classification.
+All three are Python-based applications that are installed as a single Python module.
+
+repo: [https://github.com/TheJacksonLaboratory/dti_motion](https://github.com/TheJacksonLaboratory/dti_motion)
 
 ## Classification Methods
 There are several machine learning methods of classification offered by both the command line and GUI applications.  Additionally, the CLI offers a simple threshold-based method using Median Absolute Deviation (MAD).

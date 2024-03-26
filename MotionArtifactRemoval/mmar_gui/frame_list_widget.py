@@ -39,9 +39,11 @@ class FrameListWidget(QWidget):
                 lambda: self.framelist_clicked(accepted_selected=False))
 
         # button to save images
-        self.b_save_all = QPushButton('Save Modified Scan')
+        self.b_save_all = QPushButton('Save All Slices')
+        self.b_save_all.setToolTip("Save all slices with frames rejected by current settings removed.")
         self.b_save_all.clicked.connect(self.on_save_clicked)
         self.b_save_slice = QPushButton('Save Current Slice')
+        self.b_save_slice.setToolTip("Save current slice with frames from rejected frame list above removed.")
         self.b_save_slice.clicked.connect(self.on_save_slice_clicked)
 
         vbl_main = QVBoxLayout()
