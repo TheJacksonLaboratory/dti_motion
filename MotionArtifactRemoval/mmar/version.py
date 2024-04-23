@@ -7,7 +7,7 @@ Simple version class
 class Version:
     ''' Constructs and returns the version (e.g. 4.012) '''
     major_ver = 1
-    minor_ver = 9
+    minor_ver = 10
 
     version_str = "0.000"
 
