@@ -42,9 +42,6 @@ class FrameListWidget(QWidget):
         self.b_save_all = QPushButton('Save All Slices')
         self.b_save_all.setToolTip("Save all slices with frames rejected by current settings removed.")
         self.b_save_all.clicked.connect(self.on_save_clicked)
-        self.b_save_slice = QPushButton('Save Current Slice')
-        self.b_save_slice.setToolTip("Save current slice with frames from rejected frame list above removed.")
-        self.b_save_slice.clicked.connect(self.on_save_slice_clicked)
 
         vbl_main = QVBoxLayout()
         vbl_1 = QVBoxLayout()
@@ -58,7 +55,6 @@ class FrameListWidget(QWidget):
         hbl_lists.addLayout(vbl_2)
         vbl_main.addLayout(hbl_lists)
         vbl_main.addWidget(self.b_save_all)
-        vbl_main.addWidget(self.b_save_slice)
 
         self.setLayout(vbl_main)
 
@@ -103,6 +99,8 @@ class FrameListWidget(QWidget):
         item = self.framelist_accepted.currentItem()
         self.framelist_rejected.addItem(item.text())
         self.framelist_accepted.takeItem(self.framelist_accepted.row(item))
+        frame_number = int(item.text().split(' ')[0])
+        self.parent().move_frame_to_rejected(frame_number)
 
     def framelist_rejected_double_clicked(self):
         """
@@ -111,6 +109,8 @@ class FrameListWidget(QWidget):
         item = self.framelist_rejected.currentItem()
         self.framelist_accepted.addItem(item.text())
         self.framelist_rejected.takeItem(self.framelist_rejected.row(item))
+        frame_number = int(item.text().split(' ')[0])
+        self.parent().move_frame_from_rejected(frame_number)
 
     def get_accepted_frames(self):
         """
@@ -132,8 +132,3 @@ class FrameListWidget(QWidget):
         '''
         self.parent().save_all_slices()
 
-
-    def on_save_slice_clicked(self):
-        rejected_frames = self.get_rejected_frames()
-        self.parent().save_single_slice(rejected_frames)
-        return

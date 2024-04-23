@@ -17,4 +17,5 @@ env_*
 build
 MotionArtifactRemoval/.pylintrc
 mmar_config_last.txt
+data/
 

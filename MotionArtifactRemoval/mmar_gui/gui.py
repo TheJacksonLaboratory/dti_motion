@@ -19,17 +19,18 @@ from PyQt5.QtWidgets import (QApplication, QGridLayout, QWidget, QVBoxLayout, QM
 from ..mmar.bad_frames import create_mask
 from ..mmar.version import Version
 from ..mmar.tensor_metadata import TensorMetadata
-from ..mmar.write_output import write_edited_data, write_edited_slice
+from ..mmar.write_output import write_edited_data
+from ..mmar.bad_frames import find_bad_frames_ml
 
 
 from .canvas_widget import CanvasWidget
 from .frame_list_widget import FrameListWidget
 from .image_navigator_widget import ImageNavigator
-from .model_widget import ModelWidget
 from .image_info_widget import ImageInfoWidget
 from .mouse_list_widget import MouseListWidget
 from .settings_widget import SettingsWidget
 from .utils import show_warning
+
 
 class App(QWidget):
     ''' Main application for the mmar GUI. '''
@@ -48,8 +49,8 @@ class App(QWidget):
         self.file_name = ""
         self.tensor_metadata = TensorMetadata()
 
-        self.probs_by_slice = []
-        self.frames_by_slice = []
+        self.probs_by_slice = [] # when populated the frame indices are 0-based, starting after the zero-diff frame.
+        self.rejected_frames_by_slice = []
         self.mouse_name = ''
         self.parent_folder = ''
 
@@ -60,6 +61,30 @@ class App(QWidget):
         self.update_model()
 
         self.init_ui()
+
+    def move_frame_to_rejected(self, frame_number):
+        '''
+        Called to move a frame to the rejected list.
+        The frame_number is the 0-based frame in the scane.
+        '''
+        frame_adjusted = frame_number - 1
+        slice_number = self.image_navigator.get_current_slice()
+        self.rejected_frames_by_slice[slice_number].append(frame_adjusted)
+        self.rejected_frames_by_slice[slice_number].sort()
+        return
+
+    def move_frame_from_rejected(self, frame_number):
+        '''
+        Called to remove a frame from the rejected list.
+        The frame_number is the 0-based frame in the scane.
+        '''
+        frame_adjusted = frame_number - 1
+        slice_number = self.image_navigator.get_current_slice()
+        try:
+            self.rejected_frames_by_slice[slice_number].remove(frame_adjusted)
+        except:
+            return
+
 
     def init_ui(self):
         '''
@@ -76,7 +101,6 @@ class App(QWidget):
         self.frame_list_widget = FrameListWidget()
         self.mouse_list_widget = MouseListWidget()
         self.image_info_widget = ImageInfoWidget()
-        self.model_widget = ModelWidget()
         self.canvas = CanvasWidget()
         model_path = os.path.join(up(up(__file__)),'motion_detector','trained_models','frame_rejection_all_80.pkl')
         self.settings_widget = SettingsWidget(model_path)
@@ -94,9 +118,6 @@ class App(QWidget):
 
         self.mouse_list_widget.mouseSelectionChanged.connect(self.update_mouse)
         self.mouse_list_widget.mouseSelectionChanged.connect(self.update_framelist)
-
-        self.model_widget.modelSelectionChanged.connect(self.update_data)
-        self.model_widget.thresholdChanged.connect(self.update_mouse)
 
         self.settings_widget.directoryOpen.connect(
             lambda: self.mouse_list_widget.update_list(
@@ -117,7 +138,6 @@ class App(QWidget):
         layout.addWidget(self.canvas, 2, 1, _canvas_length-1, 5)
         layout.addWidget(self.frame_list_widget, 1, 6, _canvas_length+3, 1)
         layout.addWidget(self.image_navigator, _canvas_length+1, 1, 1, 5)
-        layout.addWidget(self.model_widget, _canvas_length+2, 1, 2, 3)
         self.setLayout(layout)
         self.show()
         self.mouse_list_widget.update_list(self.settings_widget.get_list_of_mice())
@@ -244,7 +264,7 @@ class App(QWidget):
 
         thresh = self.settings_widget.get_ml_thresh()
 
-        self.frames_by_slice, self.probs_by_slice = self.model_widget.get_rejected_frames(
+        self.rejected_frames_by_slice, self.probs_by_slice = self.get_rejected_frames(
                     parent_folder=self.parent_folder,
                     mouse_name=self.mouse_name,
                     data = self.data[1:,...],
@@ -254,18 +274,19 @@ class App(QWidget):
                     )
         return True
 
+
     def update_framelist(self):
-        """
+        '''
         Display the updated list of frames to be displayed.
-        """
+        '''
         if (self.data is None) or (not self.mouse_list_widget.get_selected_mouse()):
             self.frame_list_widget.clear()
             return
 
         # update frame list with probabilites for current slice
-        if not self.frames_by_slice:
+        if not self.rejected_frames_by_slice:
             return
-        rejected_frames = self.frames_by_slice[self.image_navigator.get_current_slice()]
+        rejected_frames = self.rejected_frames_by_slice[self.image_navigator.get_current_slice()]
         frame_probabilities = self.probs_by_slice[self.image_navigator.get_current_slice()]
 
         self.frame_list_widget.update_framelist(
@@ -285,42 +306,6 @@ class App(QWidget):
         self.model = pickle.load(open(model_path, 'rb'))
 
 
-    def save_single_slice(self, rejected_frames):
-        slice_number = self.image_navigator.get_current_slice()
-        output_dir = self.settings_widget.get_output_dir()
-        if not output_dir:
-            output_dir = 'output'
-        src_img_path = self.file_name
-        output_dir = os.path.join(
-            self.settings_widget.get_project_folder(),
-            self.mouse_list_widget.get_selected_mouse(),
-            self.settings_widget.get_output_dir())
-
-        use_subdirs = self.settings_widget.get_use_subdirs()
-        save_3d = not self.settings_widget.get_save_4d()
-
-        error_str = write_edited_slice(
-            output_dir,
-            src_img_path,
-            self.data_original,
-            self.tensor_metadata,
-            rejected_frames,
-            slice_number,
-            use_subdirs,
-            save_3d)
-        if error_str:
-            show_warning(msg=f"Error occurred writing data:\n\n{error_str}")
-            return False
-
-        msg_box = QMessageBox()
-        msg_box.setIcon(QMessageBox.Information)
-        msg_box.setText(f"The modified image and metadata for slice-{slice_number} are saved in:\n\n{output_dir}")
-        msg_box.setWindowTitle("mmar_gui")
-        msg_box.setStandardButtons(QMessageBox.Ok)
-        msg_box.setSizeGripEnabled(True)
-        msg_box.exec()
-
-        return
 
     def save_all_slices(self):
         '''
@@ -335,7 +320,7 @@ class App(QWidget):
             self.settings_widget.get_project_folder(),
             self.mouse_list_widget.get_selected_mouse(),
             self.settings_widget.get_output_dir())
-        rejected_frames = [[i+1 for i in s] for s in self.frames_by_slice]
+        rejected_frames = [[i+1 for i in s] for s in self.rejected_frames_by_slice]
 
         use_subdirs = self.settings_widget.get_use_subdirs()
         save_3d = not self.settings_widget.get_save_4d()
@@ -361,6 +346,30 @@ class App(QWidget):
         msg_box.exec()
 
         return True
+
+
+    def get_rejected_frames(self,
+                            parent_folder=None,
+                            mouse_name=None,
+                            data=None,
+                            CV_result=None,
+                            classifier="Logistic Regression",
+                            threshold=0.5
+                            ):
+        '''
+        get rejected frames
+        '''
+        Y_predicted, Y_proba = find_bad_frames_ml(
+            data,
+            cv_result=CV_result,
+            classifier=classifier,
+            num_slices=data.shape[1],
+            num_frames_large=data.shape[0]+1,
+            prob_thresh=threshold
+        )
+
+        return Y_predicted, Y_proba
+
 
 
 def run_gui():
