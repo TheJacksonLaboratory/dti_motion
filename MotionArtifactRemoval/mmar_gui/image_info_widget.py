@@ -13,20 +13,20 @@ class ImageInfoWidget(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.l_width = QLabel('')
-        self.l_height = QLabel('')
+        self.l_width_height = QLabel('')
         self.l_slices = QLabel('')
         self.l_frames = QLabel('')
         self.l_scans = QLabel('')
         self.l_longest_scan = QLabel('')
+        self.l_range = QLabel('')
 
         form_layout = QFormLayout()
-        form_layout.addRow("width:", self.l_width)
-        form_layout.addRow("height:", self.l_height)
+        form_layout.addRow("dim:", self.l_width_height)
         form_layout.addRow("slices:", self.l_slices)
         form_layout.addRow("frames:", self.l_frames)
         form_layout.addRow("scans:", self.l_scans)
         form_layout.addRow("longest scan:", self.l_longest_scan)
+        form_layout.addRow("range:", self.l_range)
 
         group_box = QGroupBox("Image Info")
         group_box.setLayout(form_layout)
@@ -37,15 +37,14 @@ class ImageInfoWidget(QWidget):
 
     def clear(self):
         ''' Clear all values in the display '''
-        self.l_width.setText('')
-        self.l_height.setText('')
+        self.l_width_height.setText('')
         self.l_slices.setText('')
         self.l_frames.setText('')
         self.l_scans.setText('')
         self.l_longest_scan.setText('')
 
 
-    def set_info(self, width, height, slices, frames, scans, start, end):
+    def set_info(self, width, height, slices, frames, scans, start, end, min_val, max_val):
         '''
         Set all the values.
         Parameters:
@@ -64,9 +63,9 @@ class ImageInfoWidget(QWidget):
             end : integer
                 index of the last frame of the longest scan
         '''
-        self.l_width.setText(f"{width}")
-        self.l_height.setText(f"{height}")
+        self.l_width_height.setText(f"{width} x {height}")
         self.l_slices.setText(f"{slices}")
         self.l_frames.setText(f"{frames}")
         self.l_scans.setText(f"{scans}")
         self.l_longest_scan.setText(f"[{start}-{end}]")
+        self.l_range.setText(f"[{min_val}-{max_val}]")

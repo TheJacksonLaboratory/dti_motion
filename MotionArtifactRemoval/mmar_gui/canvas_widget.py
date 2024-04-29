@@ -1,13 +1,11 @@
 
-import matplotlib
-matplotlib.use("Qt5Agg")
-
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QVBoxLayout, QWidget
-
+import matplotlib
+matplotlib.use("Qt5Agg")
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_qt5agg import \
-    FigureCanvasQTAgg as FigureCanvas
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import numpy as np
 
 
 class CanvasWidget(QWidget):
@@ -31,28 +29,23 @@ class CanvasWidget(QWidget):
 
 
 
-    def update_image(self, image, contrast_range, display_mask=False):
+    def update_image(self, image, contrast_range):
         """
         Updates the image on the canvas.
         """
         if image is None:
             return
+
         self.figure.clear()
         ax = self.figure.add_subplot(111)
 
-        if display_mask:
+        if contrast_range is None:
             ax.imshow(image, cmap='gray')
         else:
-            # for frames (except the frame 0) we keep the range the same so imshow doesn't adjust contrast automatically
-            if contrast_range is None:
-                ax.imshow(image, cmap='gray')
-            else:
-                ax.imshow(
-                        image, 
-                        cmap='gray', 
-                        vmin=contrast_range[0],
-                        vmax=contrast_range[1]
-                    )
+            max_val = np.max(image)
+            new_min = max_val * contrast_range[0]
+            new_max = max_val * contrast_range[1]
+            ax.imshow(image, cmap='gray', vmin=new_min, vmax=new_max)
         plt.axis('off')
         self.figure.tight_layout()
         self.canvas.draw()

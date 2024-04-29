@@ -7,6 +7,5 @@ PyQt5>=5.15.4
 scikit-image>=0.15.0
 scikit-learn==1.0.0
 SimpleITK>=2.0.0
-superqt>=0.2.5
 tqdm>=4.64.0
 imbalanced-learn>=0.8.1

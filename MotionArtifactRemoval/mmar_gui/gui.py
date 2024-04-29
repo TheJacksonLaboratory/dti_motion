@@ -15,13 +15,12 @@ from os.path import dirname as up
 import SimpleITK as sitk
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (QApplication, QGridLayout, QWidget, QVBoxLayout, QMessageBox)
+import numpy as np
 
-from ..mmar.bad_frames import create_mask
 from ..mmar.version import Version
 from ..mmar.tensor_metadata import TensorMetadata
 from ..mmar.write_output import write_edited_data
 from ..mmar.bad_frames import find_bad_frames_ml
-
 
 from .canvas_widget import CanvasWidget
 from .frame_list_widget import FrameListWidget
@@ -46,6 +45,7 @@ class App(QWidget):
         self.frame_num = None
         self.data = None
         self.data_original = None
+        self.image_range = []
         self.file_name = ""
         self.tensor_metadata = TensorMetadata()
 
@@ -109,12 +109,10 @@ class App(QWidget):
         self.image_navigator.frameChanged[int].connect(self.update_canvas)
         self.image_navigator.sliceChanged[int].connect(self.update_canvas)
         self.image_navigator.sliceChanged[int].connect(self.update_framelist)
-        self.image_navigator.setContrastChecked.connect(self.update_canvas)
+        self.image_navigator.contrastCheckBoxClicked.connect(self.update_canvas)
         self.image_navigator.contrastRangeChanged.connect(self.update_canvas)
-        self.image_navigator.imageOrMaskChanged.connect(self.update_canvas)
 
-        self.frame_list_widget.currentSelectionChanged.connect(
-                self.image_navigator.set_frame_value)
+        self.frame_list_widget.currentSelectionChanged.connect(self.image_navigator.set_frame_value)
 
         self.mouse_list_widget.mouseSelectionChanged.connect(self.update_mouse)
         self.mouse_list_widget.mouseSelectionChanged.connect(self.update_framelist)
@@ -211,9 +209,13 @@ class App(QWidget):
                 self.first_frame, self.frame_count = self.tensor_metadata.get_longest_scan()
 
         self.data = self.data_original[self.first_frame:self.first_frame+self.frame_count+1,:,:,:]
-        self.image_info_widget.set_info(image_shape[3], image_shape[2], image_shape[1], image_shape[0], scan_count, self.first_frame, self.first_frame+self.frame_count-1)
-        # set range limits
-        self.image_navigator.set_contrast_range([0,self.data.max()])
+        max_img_val = np.max(self.data[1:, :, :, :])
+        min_img_val = np.min(self.data[1:, :, :, :])
+        self.image_range = [min_img_val, max_img_val]
+
+        self.image_info_widget.set_info(image_shape[3], image_shape[2], image_shape[1], image_shape[0],
+                                        scan_count, self.first_frame, self.first_frame+self.frame_count-1,
+                                        min_img_val, max_img_val)
 
         # update rejected frames
         if not self.update_frame_rejection_prob():
@@ -228,27 +230,14 @@ class App(QWidget):
         if self.data_original is None:
             return
         # contrast range
-        if self.image_navigator.set_contrast.isChecked():
+        if self.image_navigator.contrast_group.isChecked():
             contrast_range = self.image_navigator.get_contrast_range()
         else:
             contrast_range = None
 
-        if self.image_navigator.image_or_mask.isChecked():
-            # display mask
-            image = create_mask(
-                                self.data_original[0,self.image_navigator.get_current_slice(),:,:],
-                                mask_is_fg=False
-                            )[0]
-        else:
-            # display image
-            image = self.data_original[self.image_navigator.get_frame_value(),
-                        self.image_navigator.get_current_slice(),:,:]
+        image = self.data_original[self.image_navigator.get_frame_value(), self.image_navigator.get_current_slice(),:,:]
+        self.canvas.update_image(image, contrast_range=contrast_range)
 
-        self.canvas.update_image(
-                                image,
-                                contrast_range=contrast_range,
-                                display_mask=self.image_navigator.image_or_mask.isChecked()
-                            )
 
     def update_frame_rejection_prob(self):
         """
